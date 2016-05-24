@@ -37,24 +37,13 @@
     //Add earth
     var loader = new THREE.TextureLoader();
 
-    //Earth material
-    loader.load(
-      'images/earth.jpg',
-    	function (texture) {
-    		// do something with the texture
-        var geometry = new THREE.SphereGeometry( 200, 20, 20 );
-        var material = new THREE.MeshPhongMaterial( { map: texture, overdraw: 0.5 } );
-        var earthMesh = new THREE.Mesh(geometry, material);
-        scene.add(earthMesh);
-    	},
-    	// Function called when download progresses
-    	function (xhr) {
-    		console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
-    	},
-    	// Function called when download errors
-    	function (xhr) {
-    		console.log( 'An error happened' );
-    	});
+    //Earth material (https://github.com/mrdoob/three.js/blob/master/examples/canvas_geometry_earth.html)
+      loader.load('images/earth.jpg', function (texture) {
+				var geometry = new THREE.SphereGeometry( 200, 20, 20 );
+				var material = new THREE.MeshBasicMaterial( { map: texture, overdraw: 0.5 } );
+				var earthMesh = new THREE.Mesh( geometry, material );
+				scene.add(earthMesh);
+			});
   	//earthMat.bumpMap = loader.load('images/earth.jpg');
   	//earthMat.bumpScale = 1;
 
