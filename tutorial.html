@@ -7,6 +7,9 @@
   <style>
     body {
       margin: 0;
+      background-image: url("images/universe.jpg");
+      background-size: cover;
+      background-repeat: no-repeat;
     }
 
     canvas {
@@ -19,38 +22,58 @@
 <body>
   <script src="http://mrdoob.github.com/three.js/build/three.min.js"></script>
   <script>
-    //Init
+
+    //Init main scene and camera
     var scene = new THREE.Scene();
     var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 500;
 
-    var renderer = new THREE.WebGLRenderer();
+    //Init renderer
+    var renderer = new THREE.WebGLRenderer({antialias: true, alpha: true});
+    renderer.setClearColor( 0x000000, 0 ); //Set transparent background
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    //Add cube
-    var geometry = new THREE.BoxGeometry(1, 1, 1);
-    var material = new THREE.MeshPhongMaterial({
-      color: 0x64daff
-    });
-    var cube = new THREE.Mesh(geometry, material);
-    scene.add(cube);
+    //Add earth
+    var loader = new THREE.TextureLoader();
+
+    //Earth material
+    loader.load(
+      'images/earth.jpg',
+    	function (texture) {
+    		// do something with the texture
+        var geometry = new THREE.SphereGeometry( 200, 20, 20 );
+        var material = new THREE.MeshPhongMaterial( { map: texture, overdraw: 0.5 } );
+        var earthMesh = new THREE.Mesh(geometry, material);
+        scene.add(earthMesh);
+    	},
+    	// Function called when download progresses
+    	function (xhr) {
+    		console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
+    	},
+    	// Function called when download errors
+    	function (xhr) {
+    		console.log( 'An error happened' );
+    	});
+  	//earthMat.bumpMap = loader.load('images/earth.jpg');
+  	//earthMat.bumpScale = 1;
 
     //Add light
-  	var light = new THREE.AmbientLight( 0x404040 );
+  	var light = new THREE.AmbientLight(0x040404);
   	scene.add(light);
-
-    camera.position.z = 5;
 
     //Scene rendering
     function render() {
     	requestAnimationFrame(render);
 
-      //Add cube animation
-      cube.rotation.x += 0.01;
-      cube.rotation.y += 0.01;
+      //Add earth animation
+      //earthMesh.rotation.y += 0.005;
 
-    	renderer.render(scene, camera);
+      //renderer.autoClear = false;
+      //renderer.clear();
+      renderer.render(scene, camera);
     }
+
     render();
 
   </script>
