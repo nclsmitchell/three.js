@@ -22,7 +22,7 @@
   <script>
 
   var camera, scene, renderer;
-  var earth, universe;
+  var earth, clouds, universe;
 
   init();
   render();
@@ -33,8 +33,10 @@
     scene = new THREE.Scene();
 
     earth = new THREE.Group();
+    clouds = new THREE.Group();
     universe = new THREE.Group();
 		scene.add(earth);
+    scene.add(clouds);
     scene.add(universe);
 
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -48,17 +50,37 @@
 
     //Add earth
     var loader = new THREE.TextureLoader();
+    var geometry = new THREE.SphereGeometry(0.5, 32, 32);
+    var earthMat  = new THREE.MeshPhongMaterial({
+      map         : loader.load('images/earth_map.jpg'),
+      bumpMap     : loader.load('images/earth_bump.jpg'),
+      bumpScale   : 1,
+      specularMap : loader.load('images/earth_specular.jpg'),
+      specular    : new THREE.Color(0xafafaf)
+    });
 
-    loader.load( 'images/earth_base.jpg', function (texture) {
-      var geometry = new THREE.SphereGeometry(0.5, 32, 32);
-      var material = new THREE.MeshBasicMaterial({map: texture, overdraw: 0.5});
-      var earthMesh = new THREE.Mesh(geometry, material);
-      earth.add(earthMesh);
-    } );
+  	var earthMesh = new THREE.Mesh(geometry, earthMat);
+    earth.add(earthMesh);
+
+    //Add clouds
+    var geometry   = new THREE.SphereGeometry(0.5, 32, 32)
+    var material  = new THREE.MeshPhongMaterial({
+      map         : loader.load('images/earth_cloud.jpg'),
+      side        : THREE.DoubleSide,
+      opacity     : 0.8,
+      transparent : true,
+      depthWrite  : false,
+    })
+
+    var cloudMesh = new THREE.Mesh(geometry, material);
+    earth.add(cloudMesh);
+
+    //Add light
+  	var light = new THREE.AmbientLight(0xcfcfcf); // soft white light
+  	scene.add(light);
+
 
     //Add universe
-    var loader = new THREE.TextureLoader();
-
     loader.load( 'images/universe.jpg', function (texture) {
       var geometry = new THREE.SphereGeometry(5, 32, 32);
       var material = new THREE.MeshBasicMaterial({map: texture, side: THREE.BackSide, overdraw: 0.5});
@@ -73,6 +95,7 @@
     requestAnimationFrame(render);
 
     earth.rotation.y -= 0.001;
+    clouds.rotation.y += 0.0005;
     universe.rotation.y += 0.0001;
 
     renderer.render(scene, camera);
