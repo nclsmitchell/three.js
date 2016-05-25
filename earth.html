@@ -3,7 +3,7 @@
 
 <head>
   <meta charset=utf-8>
-  <title>My first Three.js app</title>
+  <title>WebGL Earth</title>
   <style>
     body {
       margin: 0;
@@ -33,10 +33,10 @@
     scene = new THREE.Scene();
 
     earth = new THREE.Group();
+    scene.add(earth);
     clouds = new THREE.Group();
-    universe = new THREE.Group();
-		scene.add(earth);
     scene.add(clouds);
+    universe = new THREE.Group();
     scene.add(universe);
 
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -60,23 +60,25 @@
     });
 
   	var earthMesh = new THREE.Mesh(geometry, earthMat);
-    earth.add(earthMesh);
 
     //Add clouds
     var geometry   = new THREE.SphereGeometry(0.5, 32, 32)
     var material  = new THREE.MeshPhongMaterial({
       map         : loader.load('images/earth_cloud.jpg'),
       side        : THREE.DoubleSide,
-      opacity     : 0.8,
+      opacity     : 0.5,
       transparent : true,
       depthWrite  : false,
     })
 
     var cloudMesh = new THREE.Mesh(geometry, material);
-    earth.add(cloudMesh);
 
-    //Add light
-  	var light = new THREE.AmbientLight(0xcfcfcf); // soft white light
+    //Add to earth
+    earthMesh.add(cloudMesh);
+    earth.add(earthMesh);
+
+    //Add soft white light
+  	var light = new THREE.AmbientLight(0xcfcfcf);
   	scene.add(light);
 
 
@@ -95,7 +97,7 @@
     requestAnimationFrame(render);
 
     earth.rotation.y -= 0.001;
-    clouds.rotation.y += 0.0005;
+    clouds.rotation.y += 0.0002;
     universe.rotation.y += 0.0001;
 
     renderer.render(scene, camera);
