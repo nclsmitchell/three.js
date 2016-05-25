@@ -2,4 +2,6 @@
 
 A few projects created with the JavaScript Framework Three.js
 
-### 1. Tutorial
+### 1. Earth
+
+A test project with space objects
