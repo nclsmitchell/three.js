@@ -17,15 +17,136 @@
 </head>
 
 <body>
-  <div id="container"></div>
+
   <script src="http://mrdoob.github.com/three.js/build/three.min.js"></script>
+  <script src="js/OrbitControls.js"></script>
+  <script src="js/SkyShader.js"></script>
+  <!--<script src="js/dat.gui.min.js"></script-->
+
   <script>
 
-  var camera, scene, renderer;
+  var camera, controls, scene, renderer;
   var earth, clouds, universe;
+  var sky, sunSphere;
 
   init();
   render();
+
+  function initElems() {
+
+    //Add earth
+    var loader = new THREE.TextureLoader();
+    var geometry = new THREE.SphereGeometry(1, 32, 32);
+    var earthMat  = new THREE.MeshPhongMaterial({
+      map         : loader.load('images/earth_map.jpg'),
+      bumpMap     : loader.load('images/earth_bump.jpg'),
+      bumpScale   : 0.1,
+      specularMap : loader.load('images/earth_specular.jpg'),
+      specular    : new THREE.Color(0xafafaf)
+    });
+
+    var earthMesh = new THREE.Mesh(geometry, earthMat);
+
+    //Add clouds
+    var geometry   = new THREE.SphereGeometry(1, 32, 32)
+    var material  = new THREE.MeshPhongMaterial({
+      map         : loader.load('images/earth_cloud.jpg'),
+      side        : THREE.DoubleSide,
+      opacity     : 0.6,
+      transparent : true,
+      depthWrite  : false,
+    })
+
+    var cloudMesh = new THREE.Mesh(geometry, material);
+
+    //Add to earth
+    earthMesh.add(cloudMesh);
+    earth.add(earthMesh);
+
+    //Add Sky Mesh
+    sky = new THREE.Sky();
+    scene.add(sky.mesh);
+
+    // Add Sun Helper
+    sunSphere = new THREE.Mesh(
+      new THREE.SphereBufferGeometry(109, 16, 8),
+      new THREE.MeshBasicMaterial({color: 0xffffff})
+    );
+    //sunSphere.position.set(3, 3, -4);
+    sunSphere.position.y = -23544;
+    //scene.add(sunSphere);
+
+    var effectController = {
+      turbidity       : 1,
+      reileigh        : 0.1,
+      mieCoefficient  : 0.0043,
+      mieDirectionalG : 0.99,
+      luminance       : 1,
+      inclination     : 0.48, // elevation / inclination
+      azimuth         : 0.33, // Facing front,
+    };
+
+    var distance = 23544;
+
+    function guiChanged() {
+
+      var uniforms = sky.uniforms;
+      uniforms.turbidity.value = effectController.turbidity;
+      uniforms.reileigh.value = effectController.reileigh;
+      uniforms.luminance.value = effectController.luminance;
+      uniforms.mieCoefficient.value = effectController.mieCoefficient;
+      uniforms.mieDirectionalG.value = effectController.mieDirectionalG;
+
+      var theta = Math.PI * (effectController.inclination - 0.5);
+      var phi = 2 * Math.PI * (effectController.azimuth - 0.5);
+
+      sunSphere.position.x = distance * Math.cos( phi );
+      sunSphere.position.y = distance * Math.sin( phi ) * Math.sin( theta );
+      sunSphere.position.z = distance * Math.sin( phi ) * Math.cos( theta );
+
+      sky.uniforms.sunPosition.value.copy(sunSphere.position);
+
+      renderer.render(scene, camera);
+    }
+
+    /*
+    //GUI controllers
+    var gui = new dat.GUI();
+
+    gui.add( effectController, "turbidity", 1.0, 20.0, 0.1 ).onChange( guiChanged );
+    gui.add( effectController, "reileigh", 0.0, 4, 0.001 ).onChange( guiChanged );
+    gui.add( effectController, "mieCoefficient", 0.0, 0.1, 0.001 ).onChange( guiChanged );
+    gui.add( effectController, "mieDirectionalG", 0.0, 1, 0.001 ).onChange( guiChanged );
+    gui.add( effectController, "luminance", 0.0, 2 ).onChange( guiChanged );
+    gui.add( effectController, "inclination", 0, 1, 0.0001 ).onChange( guiChanged );
+    gui.add( effectController, "azimuth", 0, 1, 0.0001 ).onChange( guiChanged );
+    */
+
+    guiChanged();
+
+    //Add white spotlight light
+    var spotLight = new THREE.SpotLight(0xffffff);
+    spotLight.position.set(3, 3, -4);
+    spotLight.castShadow = true;
+    scene.add(spotLight);
+
+    //Add soft white light
+    var ambientLight = new THREE.AmbientLight(0xcfcfcf);
+    scene.add(ambientLight);
+
+    //Add universe
+    var geometry = new THREE.SphereGeometry(30000, 32, 32);
+    var material = new THREE.MeshBasicMaterial({
+      map         : loader.load('images/universe.jpg'),
+      side        : THREE.BackSide,
+      opacity     : 0.1,
+      transparent : true,
+      overdraw    : 0.5
+    });
+
+    var universeMesh = new THREE.Mesh(geometry, material);
+    universe.add(universeMesh);
+  }
 
   function init() {
 
@@ -39,8 +160,8 @@
     universe = new THREE.Group();
     scene.add(universe);
 
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.z = 3;
+    camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 2000000);
+    camera.position.set(0, 0, 5);
 
     //Init renderer
     renderer = new THREE.WebGLRenderer({antialias: true, alpha: true});
@@ -48,52 +169,27 @@
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    //Add earth
-    var loader = new THREE.TextureLoader();
-    var geometry = new THREE.SphereGeometry(0.5, 32, 32);
-    var earthMat  = new THREE.MeshPhongMaterial({
-      map         : loader.load('images/earth_map.jpg'),
-      bumpMap     : loader.load('images/earth_bump.jpg'),
-      bumpScale   : 1,
-      specularMap : loader.load('images/earth_specular.jpg'),
-      specular    : new THREE.Color(0xafafaf)
-    });
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+		controls.addEventListener('change', render);
 
-  	var earthMesh = new THREE.Mesh(geometry, earthMat);
+		initElems();
 
-    //Add clouds
-    var geometry   = new THREE.SphereGeometry(0.5, 32, 32)
-    var material  = new THREE.MeshPhongMaterial({
-      map         : loader.load('images/earth_cloud.jpg'),
-      side        : THREE.DoubleSide,
-      opacity     : 0.5,
-      transparent : true,
-      depthWrite  : false,
-    })
+    window.addEventListener('resize', onWindowResize, false);
+  }
 
-    var cloudMesh = new THREE.Mesh(geometry, material);
+  function onWindowResize() {
 
-    //Add to earth
-    earthMesh.add(cloudMesh);
-    earth.add(earthMesh);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
 
-    //Add soft white light
-  	var light = new THREE.AmbientLight(0xcfcfcf);
-  	scene.add(light);
+    renderer.setSize( window.innerWidth, window.innerHeight );
 
-
-    //Add universe
-    loader.load( 'images/universe.jpg', function (texture) {
-      var geometry = new THREE.SphereGeometry(5, 32, 32);
-      var material = new THREE.MeshBasicMaterial({map: texture, side: THREE.BackSide, overdraw: 0.5});
-      var universeMesh = new THREE.Mesh(geometry, material);
-      universe.add(universeMesh);
-    } );
-
+    render();
   }
 
   //Scene rendering
   function render() {
+
     requestAnimationFrame(render);
 
     earth.rotation.y -= 0.001;
@@ -102,7 +198,6 @@
 
     renderer.render(scene, camera);
   }
-
 
   </script>
 </body>
