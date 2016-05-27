@@ -6,4 +6,4 @@ A few projects created with the JavaScript Framework Three.js
 
 A test project with space objects
 
-[See live](nclsmitchell.com/three.js/earth.html)
+[See live](http://nclsmitchell.com/three.js/earth.html)
