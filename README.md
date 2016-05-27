@@ -1,4 +1,4 @@
-# Three.js
+# threejs
 
 *A few projects created with the JavaScript Framework Three.js*
 
